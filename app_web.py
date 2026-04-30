@@ -18,6 +18,8 @@ def cargar_preguntas():
     })
 
     df["Correcta"] = df["Correcta"].astype(str).str.strip().str.upper()
+    df["ID"] = pd.to_numeric(df["ID"], errors="coerce")
+
     return df
 
 df = cargar_preguntas()
@@ -38,22 +40,24 @@ modo = st.selectbox(
     ["Por bloque / aleatorio", "Preguntas por rango de ID"]
 )
 
-bloque = st.selectbox("Selecciona bloque", bloques)
+if modo == "Por bloque / aleatorio":
+    bloque = st.selectbox("Selecciona bloque", bloques)
 
-cantidad = st.number_input(
-    "Número de preguntas",
-    min_value=1,
-    max_value=len(df),
-    value=10
-)
+    cantidad = st.number_input(
+        "Número de preguntas",
+        min_value=1,
+        max_value=len(df),
+        value=10
+    )
 
-col1, col2 = st.columns(2)
+else:
+    col1, col2 = st.columns(2)
 
-with col1:
-    id_inicio = st.number_input("ID inicial", min_value=1, value=1)
+    with col1:
+        id_inicio = st.number_input("ID inicial", min_value=1, value=1)
 
-with col2:
-    id_fin = st.number_input("ID final", min_value=1, value=10)
+    with col2:
+        id_fin = st.number_input("ID final", min_value=1, value=10)
 
 if st.button("Iniciar test"):
     df_filtrado = df.copy()
@@ -66,18 +70,28 @@ if st.button("Iniciar test"):
 
         df_filtrado = df_filtrado.sort_values("ID")
 
-        st.session_state.preguntas = df_filtrado.to_dict("records")
+        if df_filtrado.empty:
+            st.error("No hay preguntas en ese rango de ID.")
+        else:
+            st.session_state.preguntas = df_filtrado.to_dict("records")
+            st.session_state.indice = 0
+            st.session_state.aciertos = 0
+            st.session_state.fallos = []
+            st.session_state.respondida = False
 
     else:
         if bloque != "Todos":
             df_filtrado = df_filtrado[df_filtrado["Bloque"] == bloque]
 
-        cantidad_real = min(cantidad, len(df_filtrado))
-
-        st.session_state.preguntas = df_filtrado.sample(n=cantidad_real).to_dict("records")    st.session_state.indice = 0
-    st.session_state.aciertos = 0
-    st.session_state.fallos = []
-    st.session_state.respondida = False
+        if df_filtrado.empty:
+            st.error("No hay preguntas en ese bloque.")
+        else:
+            cantidad_real = min(cantidad, len(df_filtrado))
+            st.session_state.preguntas = df_filtrado.sample(n=cantidad_real).to_dict("records")
+            st.session_state.indice = 0
+            st.session_state.aciertos = 0
+            st.session_state.fallos = []
+            st.session_state.respondida = False
 
 if st.session_state.preguntas:
     if st.session_state.indice < len(st.session_state.preguntas):
