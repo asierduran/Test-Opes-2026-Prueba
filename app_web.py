@@ -42,12 +42,16 @@ modo = st.selectbox(
 if modo == "Por bloque / aleatorio":
     bloque = st.selectbox("Selecciona bloque", bloques)
     cantidad = st.number_input("Número de preguntas", min_value=1, max_value=len(df), value=10)
-else:
+
+elif modo == "Preguntas por rango de ID":
     col1, col2 = st.columns(2)
     with col1:
         id_inicio = st.number_input("ID inicial", min_value=1, value=1)
     with col2:
         id_fin = st.number_input("ID final", min_value=1, value=10)
+
+elif modo == "Modo examen":
+    st.info("Se generará un examen de 100 preguntas: 10 de ID 1-200 y 90 de ID 201-700.")
 
 if st.button("Iniciar test"):
     df_filtrado = df.copy()
