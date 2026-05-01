@@ -141,10 +141,24 @@ if st.session_state.preguntas:
         st.write(f"❌ Fallos: {len(st.session_state.fallos)}")
 
         if st.session_state.fallos:
-            fallos_df = pd.DataFrame(st.session_state.fallos, columns=["ID"])
-            st.download_button(
-                "Descargar fallos",
-                fallos_df.to_csv(index=False).encode("utf-8"),
-                "fallos.csv",
-                "text/csv"
-            )
+    fallos_df = pd.DataFrame(st.session_state.fallos, columns=["ID"])
+    st.download_button(
+        "Descargar fallos",
+        fallos_df.to_csv(index=False).encode("utf-8"),
+        "fallos.csv",
+        "text/csv"
+    )
+
+    if st.button("Repasar preguntas falladas"):
+        ids_fallados = st.session_state.fallos
+
+        df_fallos = df[df["ID"].isin(ids_fallados)]
+        df_fallos = df_fallos.sort_values("ID")
+
+        st.session_state.preguntas = df_fallos.to_dict("records")
+        st.session_state.indice = 0
+        st.session_state.aciertos = 0
+        st.session_state.fallos = []
+        st.session_state.respondida = False
+
+        st.rerun()
