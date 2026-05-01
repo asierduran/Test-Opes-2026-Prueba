@@ -21,6 +21,13 @@ def cargar_preguntas():
     df["ID"] = pd.to_numeric(df["ID"], errors="coerce")
     return df
 
+# 🔥 Función para limpiar "a) b) c) d)" del Excel
+def limpiar(texto):
+    texto = str(texto).strip()
+    if texto.lower().startswith(("a)", "b)", "c)", "d)")):
+        return texto[2:].strip()
+    return texto
+
 df = cargar_preguntas()
 
 st.title("🧠 Test Fisio")
@@ -111,11 +118,12 @@ if st.session_state.preguntas:
         st.caption(f"ID: {p['ID']}")
         st.write(p["Pregunta"])
 
+        # 🔥 Limpieza aplicada aquí
         opciones = {
-            "A": p["A"],
-            "B": p["B"],
-            "C": p["C"],
-            "D": p["D"]
+            "A": limpiar(p["A"]),
+            "B": limpiar(p["B"]),
+            "C": limpiar(p["C"]),
+            "D": limpiar(p["D"])
         }
 
         respuesta = st.radio(
