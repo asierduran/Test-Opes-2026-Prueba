@@ -19,7 +19,6 @@ def cargar_preguntas():
 
     df["Correcta"] = df["Correcta"].astype(str).str.strip().str.upper()
     df["ID"] = pd.to_numeric(df["ID"], errors="coerce")
-
     return df
 
 df = cargar_preguntas()
@@ -37,38 +36,45 @@ bloques = ["Todos"] + list(df["Bloque"].dropna().unique())
 
 modo = st.selectbox(
     "Modo de test",
-    ["Por bloque / aleatorio", "Preguntas por rango de ID"]
+    ["Por bloque / aleatorio", "Preguntas por rango de ID", "Modo examen"]
 )
 
 if modo == "Por bloque / aleatorio":
     bloque = st.selectbox("Selecciona bloque", bloques)
-
-    cantidad = st.number_input(
-        "Número de preguntas",
-        min_value=1,
-        max_value=len(df),
-        value=10
-    )
-
+    cantidad = st.number_input("Número de preguntas", min_value=1, max_value=len(df), value=10)
 else:
     col1, col2 = st.columns(2)
-
     with col1:
         id_inicio = st.number_input("ID inicial", min_value=1, value=1)
-
     with col2:
         id_fin = st.number_input("ID final", min_value=1, value=10)
 
 if st.button("Iniciar test"):
     df_filtrado = df.copy()
 
-    if modo == "Preguntas por rango de ID":
+    if modo == "Modo examen":
+        df_comun = df[(df["ID"] >= 1) & (df["ID"] <= 200)]
+        df_especifico = df[(df["ID"] >= 201) & (df["ID"] <= 700)]
+
+        if len(df_comun) < 10 or len(df_especifico) < 90:
+            st.error("No hay suficientes preguntas para generar el examen.")
+        else:
+            preguntas_comun = df_comun.sample(n=10)
+            preguntas_especifico = df_especifico.sample(n=90)
+
+            df_examen = pd.concat([preguntas_comun, preguntas_especifico]).sample(frac=1)
+
+            st.session_state.preguntas = df_examen.to_dict("records")
+            st.session_state.indice = 0
+            st.session_state.aciertos = 0
+            st.session_state.fallos = []
+            st.session_state.respondida = False
+
+    elif modo == "Preguntas por rango de ID":
         df_filtrado = df_filtrado[
             (df_filtrado["ID"] >= id_inicio) &
             (df_filtrado["ID"] <= id_fin)
-        ]
-
-        df_filtrado = df_filtrado.sort_values("ID")
+        ].sort_values("ID")
 
         if df_filtrado.empty:
             st.error("No hay preguntas en ese rango de ID.")
@@ -99,7 +105,6 @@ if st.session_state.preguntas:
 
         st.subheader(f"Pregunta {st.session_state.indice + 1} de {len(st.session_state.preguntas)}")
         st.caption(f"ID: {p['ID']}")
-
         st.write(p["Pregunta"])
 
         opciones = {
@@ -141,24 +146,23 @@ if st.session_state.preguntas:
         st.write(f"❌ Fallos: {len(st.session_state.fallos)}")
 
         if st.session_state.fallos:
-    fallos_df = pd.DataFrame(st.session_state.fallos, columns=["ID"])
-    st.download_button(
-        "Descargar fallos",
-        fallos_df.to_csv(index=False).encode("utf-8"),
-        "fallos.csv",
-        "text/csv"
-    )
+            fallos_df = pd.DataFrame(st.session_state.fallos, columns=["ID"])
 
-    if st.button("Repasar preguntas falladas"):
-        ids_fallados = st.session_state.fallos
+            st.download_button(
+                "Descargar fallos",
+                fallos_df.to_csv(index=False).encode("utf-8"),
+                "fallos.csv",
+                "text/csv"
+            )
 
-        df_fallos = df[df["ID"].isin(ids_fallados)]
-        df_fallos = df_fallos.sort_values("ID")
+            if st.button("Repasar preguntas falladas"):
+                ids_fallados = st.session_state.fallos
+                df_fallos = df[df["ID"].isin(ids_fallados)].sort_values("ID")
 
-        st.session_state.preguntas = df_fallos.to_dict("records")
-        st.session_state.indice = 0
-        st.session_state.aciertos = 0
-        st.session_state.fallos = []
-        st.session_state.respondida = False
+                st.session_state.preguntas = df_fallos.to_dict("records")
+                st.session_state.indice = 0
+                st.session_state.aciertos = 0
+                st.session_state.fallos = []
+                st.session_state.respondida = False
 
-        st.rerun()
+                st.rerun()
