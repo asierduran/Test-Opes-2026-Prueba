@@ -1,7 +1,23 @@
 import pandas as pd
 import streamlit as st
+import random
 
 st.set_page_config(page_title="Test Fisio", layout="centered")
+
+mensajes_motivacion = [
+    "Vamos chicos que vais muy bien, a seguir!!",
+    "¿A cuanto estás de dejarlo todo y mandarlo todo a la mierda? No lo hagas, o hazlo, total que mas da.",
+    "WOW cuanto sabes eres un hacha!! (da igual cual haya sido el resultado de los test, los he programado de forma aleatoria).",
+    "No tendrás 5€ por ahí? Es pa un tema...",
+    "Deja de hacer test cortos para que te salgan todos los mensajes finales, no he hecho tantos...",
+    "Madre mía, no has dado una, seguro que te quieres presentar al examen?",
+    "Y recuerda, ante la duda... siempre la D, no penséis mal anda y salid a que os de un poco el aire.",
+    "Creéis que estoy siendo un poco faltoso? Yo creo que voy (si es la primera que os sale igual no mola esta... SEGUID ESTUDIANDO!!",
+    "Sabías que en las próximas opes se puede mantener nota no? Pero bueno, tampoco te va a servir de nada 🫢",
+    "Revisando las frases de motivación que estoy escribiendo... creo que solo he puesto una buena, igual estoy desvariando 😵‍💫",
+    "Te entiendo, el temario común es un puto rollo, pero alguna va a entrar así que ¡¡MÍRATELAS!!",
+    "Se aceptan propuestas para frases motivacionales, de momento creo que ya vale, ánimo team!!"
+]
 
 @st.cache_data
 def cargar_preguntas():
@@ -21,7 +37,6 @@ def cargar_preguntas():
     df["ID"] = pd.to_numeric(df["ID"], errors="coerce")
     return df
 
-# 🔥 Función para limpiar "a) b) c) d)" del Excel
 def limpiar(texto):
     texto = str(texto).strip()
     if texto.lower().startswith(("a)", "b)", "c)", "d)")):
@@ -72,7 +87,6 @@ if st.button("Iniciar test"):
         else:
             preguntas_comun = df_comun.sample(n=10)
             preguntas_especifico = df_especifico.sample(n=90)
-
             df_examen = pd.concat([preguntas_comun, preguntas_especifico]).sample(frac=1)
 
             st.session_state.preguntas = df_examen.to_dict("records")
@@ -118,7 +132,6 @@ if st.session_state.preguntas:
         st.caption(f"ID: {p['ID']}")
         st.write(p["Pregunta"])
 
-        # 🔥 Limpieza aplicada aquí
         opciones = {
             "A": limpiar(p["A"]),
             "B": limpiar(p["B"]),
@@ -154,6 +167,7 @@ if st.session_state.preguntas:
 
     else:
         st.success("Test terminado")
+        st.info(random.choice(mensajes_motivacion))
         st.write(f"✅ Aciertos: {st.session_state.aciertos} / {len(st.session_state.preguntas)}")
         st.write(f"❌ Fallos: {len(st.session_state.fallos)}")
 
